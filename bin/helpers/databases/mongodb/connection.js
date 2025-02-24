@@ -11,12 +11,13 @@ const connection = () => {
 };
 
 const createConnection = async (config) => {
-  const options = { poolSize: 50,
+  const options = {
+    poolSize: 50,
     keepAlive: 15000,
     socketTimeoutMS: 15000,
     connectTimeoutMS: 15000,
     useNewUrlParser: true,
-    useUnifiedTopology: true
+    useUnifiedTopology: true,
   };
   try {
     const connection = await Mongo.connect(config, options);
@@ -31,7 +32,7 @@ const addConnectionPool = (cfg) => {
   const connectionMongo = connection();
   connectionMongo.index = 0;
   connectionMongo.config = cfg;
-  if(_.isEmpty(connectionPool.find((obj) => obj.config === cfg))){
+  if (_.isEmpty(connectionPool.find((obj) => obj.config === cfg))) {
     connectionPool.push(connectionMongo);
   }
 };
@@ -64,7 +65,6 @@ const ifExistConnection = async (config) => {
     return wrapper.error('Connection Not Exist, Connection Must be Created Before');
   }
   return wrapper.data(state);
-
 };
 
 const isConnected = async (state) => {
@@ -85,7 +85,6 @@ const getConnection = async (config) => {
     const connection = await isConnected(result.data);
     connectionIndex = result.data.index;
     return connection;
-
   };
   const result = await checkConnection();
   if (result.err) {
@@ -95,13 +94,11 @@ const getConnection = async (config) => {
     }
     connectionPool[connectionIndex].db = state.data;
     return wrapper.data(connectionPool[connectionIndex]);
-
   }
   return result;
-
 };
 
 module.exports = {
   init,
-  getConnection
+  getConnection,
 };
