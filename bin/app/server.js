@@ -9,6 +9,7 @@ const wrapper = require('../helpers/utils/wrapper');
 const mongodbPooling = require('../helpers/databases/mongodb/connection');
 const errorHandler = require('../helpers/error/error_handler');
 const authUser = require('./routes/authUser');
+const poker = require('./routes/poker');
 
 const minio = require('../helpers/components/minio/minio');
 class AppServer {
@@ -53,6 +54,7 @@ class AppServer {
     mongodbPooling.init(`${config.get('/mongoDbUrl')}`);
 
     authUser.init(this.server, jwtAuth, basicAuth);
+    poker.init(this.server, jwtAuth, basicAuth);
 
     minio.init();
     // helpers initiation
