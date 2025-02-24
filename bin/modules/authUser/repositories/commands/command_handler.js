@@ -5,14 +5,14 @@ const config = require('../../../../infra/configs/global_config');
 const redis = new Redis(config.get('/redisConfig'));
 
 const InjectAdmin = async (payload) => {
-  const db = new Mongo(`${config.get('/mongoDbUrl')}`, 'oceaneyes');
+  const db = new Mongo(`${config.get('/mongoDbUrl')}`, 'games-project');
   const auth = new AuthUser(redis, db);
   const postCommand = async () => await auth.injectRoot(payload);
   return await postCommand();
 };
 
 const login = async (payload) => {
-  const db = new Mongo(`${config.get('/mongoDbUrl')}`, 'oceaneyes');
+  const db = new Mongo(`${config.get('/mongoDbUrl')}`, 'games-project');
   const auth = new AuthUser(redis, db);
   const postCommand = async () => await auth.login(payload);
   return await postCommand();

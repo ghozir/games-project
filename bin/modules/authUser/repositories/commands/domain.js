@@ -7,13 +7,7 @@ const jwtAuth = require('../../../../auth/jwt_auth_helper');
 const Unauthorized = require('../../../../helpers/error/unauthorized_error');
 const config = require('../../../../infra/configs/global_config');
 const common = require('../../../../helpers/utils/common');
-const {
-  UnprocessableEntityError,
-  NotFoundError,
-  UnauthorizedError,
-  ConflictError,
-  InternalServerError,
-} = require('../../../../helpers/error');
+const { UnprocessableEntityError, NotFoundError, UnauthorizedError, ConflictError, InternalServerError } = require('../../../../helpers/error');
 const _ = require('lodash');
 
 class AuthUser {
@@ -29,21 +23,11 @@ class AuthUser {
       email: payload.email,
     });
     if (existingAdmin.err) {
-      logger.error(
-        this.ctx,
-        'failed to check data existence',
-        'createTeacher::command.findOneTeacher',
-        existingAdmin.err
-      );
+      logger.error(this.ctx, 'failed to check data existence', 'createTeacher::command.findOneTeacher', existingAdmin.err);
       return wrapper.error(new NotFoundError('Gagal mengecek data'));
     }
     if (existingAdmin.data) {
-      logger.error(
-        this.ctx,
-        'Email already exist',
-        'createTeacher::command.findOneTeacher',
-        existingAdmin.err
-      );
+      logger.error(this.ctx, 'Email already exist', 'createTeacher::command.findOneTeacher', existingAdmin.err);
       return wrapper.error(new ConflictError('Email sudah digunakan'));
     }
 
@@ -57,12 +41,7 @@ class AuthUser {
     const result = await this.command.insertOneAdmin(payload);
 
     if (result.err) {
-      logger.error(
-        this.ctx,
-        'Failed to create admin',
-        'createAdmin::command.insertOneAdmin',
-        result.err
-      );
+      logger.error(this.ctx, 'Failed to create admin', 'createAdmin::command.insertOneAdmin', result.err);
       return wrapper.error(new InternalServerError('Gagal insert data'));
     }
 
@@ -78,29 +57,19 @@ class AuthUser {
     result = await this.query.findOneUser(queryUser);
 
     if (result.err) {
-      logger.error(
-        this.ctx,
-        'Failed to get admin credential',
-        'login::command.upstreamGetCredential',
-        result.err
-      );
+      logger.error(this.ctx, 'Failed to get admin credential', 'login::command.upstreamGetCredential', result.err);
       return wrapper.error(result.err);
     }
 
-    if (_.isEmpty(result.data))
-      return wrapper.error(new NotFoundError('Username salah!'));
+    if (_.isEmpty(result.data)) return wrapper.error(new NotFoundError('Username salah!'));
 
-    const checkPassword = await common.verifyHash(
-      result.data.password,
-      payload.password
-    );
+    const checkPassword = await common.verifyHash(result.data.password, payload.password);
     if (checkPassword.err) {
       logger.log('login', 'error', checkPassword.err);
       return wrapper.error(checkPassword);
     }
 
-    if (!checkPassword.data)
-      return wrapper.error(new UnauthorizedError('Password salah!'));
+    if (!checkPassword.data) return wrapper.error(new UnauthorizedError('Password salah!'));
 
     const now = Math.floor(Date.now() / 1000);
     result.data.id = result.data._id;
@@ -111,27 +80,15 @@ class AuthUser {
     delete result.data.updatedAt;
 
     const cacheKey = `auth-service.${result.data.role}.${result.data.id}.${now}`;
-    const time = 14 * 24 * 60 * 60;
-    const cacheResult = await this.command.setCache(
-      cacheKey,
-      result.data,
-      time
-    );
+    const time = 14 * 24 * 60 * 60 * 60;
+    const cacheResult = await this.command.setCache(cacheKey, result.data, time);
 
     if (cacheResult.err) {
-      logger.error(
-        this.ctx,
-        'Failed to set admin cache',
-        'login::command.setCache',
-        cacheResult.err
-      );
+      logger.error(this.ctx, 'Failed to set admin cache', 'login::command.setCache', cacheResult.err);
       return wrapper.error(cacheResult.err);
     }
 
-    const token = await jwtAuth.generateToken(
-      { mappedUser: { id: result.data.id }, sub: cacheKey, iat: now },
-      { expiresIn: time }
-    );
+    const token = await jwtAuth.generateToken({ mappedUser: { id: result.data.id }, sub: cacheKey, iat: now }, { expiresIn: time });
     return wrapper.data({ token: token });
   }
 
@@ -148,16 +105,10 @@ class AuthUser {
     }
 
     if (result.err) {
-      logger.error(
-        this.ctx,
-        'Failed to get admin credential',
-        'forgetPass::command.upstreamGetCredential',
-        result.err
-      );
+      logger.error(this.ctx, 'Failed to get admin credential', 'forgetPass::command.upstreamGetCredential', result.err);
       return wrapper.error(result.err);
     }
-    if (_.isEmpty(result.data))
-      return wrapper.error(new NotFoundError('Email tidak terdaftar'));
+    if (_.isEmpty(result.data)) return wrapper.error(new NotFoundError('Email tidak terdaftar'));
 
     const token = randomstring.generate({
       length: 8,
@@ -166,19 +117,10 @@ class AuthUser {
 
     const cacheKey = `auth-forgetPass.${result.data.email}.${token}`;
     const time = 600;
-    const cacheResult = await this.command.setCache(
-      cacheKey,
-      result.data,
-      time
-    );
+    const cacheResult = await this.command.setCache(cacheKey, result.data, time);
 
     if (cacheResult.err) {
-      logger.error(
-        this.ctx,
-        'Failed to set teacher cache',
-        'login::command.setCache',
-        cacheResult.err
-      );
+      logger.error(this.ctx, 'Failed to set teacher cache', 'login::command.setCache', cacheResult.err);
       return wrapper.error(cacheResult.err);
     }
 
@@ -212,12 +154,7 @@ class AuthUser {
     const getData = await this.query.getCached(getKeys.data[0]);
 
     if (getData.err) {
-      logger.error(
-        this.ctx,
-        'Failed to set teacher cache',
-        'forgot::command.getCache',
-        getData.err
-      );
+      logger.error(this.ctx, 'Failed to set teacher cache', 'forgot::command.getCache', getData.err);
       return wrapper.error(new Unauthorized('Token Expired !'));
     }
 
@@ -230,12 +167,7 @@ class AuthUser {
     );
 
     if (updatePass.err) {
-      logger.error(
-        this.ctx,
-        'Failed to update password',
-        'forgot::command.updatePass',
-        updatePass.err
-      );
+      logger.error(this.ctx, 'Failed to update password', 'forgot::command.updatePass', updatePass.err);
       return wrapper.error(updatePass.err);
     }
     await this.command.unsetCache(getKeys.data[0]);
@@ -254,12 +186,7 @@ class AuthUser {
   async logout(cacheKey) {
     const cacheResult = await this.command.unsetCache(cacheKey);
     if (cacheResult.err) {
-      logger.error(
-        this.ctx,
-        'Failed to unset teacher cache',
-        'logout::command.unsetCache',
-        cacheResult.err
-      );
+      logger.error(this.ctx, 'Failed to unset teacher cache', 'logout::command.unsetCache', cacheResult.err);
       return wrapper.error(cacheResult.err);
     }
     return wrapper.data(null);
